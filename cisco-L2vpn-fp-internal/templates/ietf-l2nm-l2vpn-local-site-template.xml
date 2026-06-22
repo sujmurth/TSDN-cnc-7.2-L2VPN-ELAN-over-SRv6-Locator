@@ -1,0 +1,63 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <?save-context vpn-network-access?>
+  <?set-context-node {./../..}?>
+  <?save-context vpn-node?>
+  <?set-context-node {./../..}?>
+  <?save-context vpn-service?>
+
+  <flat-L2vpn-internal-local-site-service xmlns="http://cisco.com/ns/nso/fp/examples/cisco-tsdn-flat-L2vpn-internal-local-site">
+    <name>L2NM-{vpn-id}-internal</name>
+    <pe>{$VPN_NODE_ID}</pe>
+
+    <?set VPN_ID={string(vpn-id)}?>
+    <?expand custom-template?>
+    <?switch-context vpn-node?>
+
+    <?expand custom-template?>
+    <?expand init-template-vars?>
+
+    <?if {$VPN_SVC_TYPE='vpn-common:vpws'}?>
+      <service-type>p2p</service-type>
+      <flat-L2vpn-p2p>
+        <pw-id>{signaling-option/ldp-or-l2tp/pw-peer-list[position()=1]/vc-id}</pw-id>
+        <local-site>
+          <?expand primary-site-common-config?>
+          <xconnect-group-name>{$VPN_ID}</xconnect-group-name>
+          <p2p-name>{$VPN_ID}</p2p-name>
+          <control-word>{$CONTROL_WORD}</control-word>
+          <pw-class>{$VPN_ID}</pw-class>
+          <xconnect-remote-ip>{signaling-option/ldp-or-l2tp/pw-peer-list[position()=1]/peer-addr}</xconnect-remote-ip>
+          <mpls-local-label>{signaling-option/ldp-or-l2tp/pw-peer-list[position()=1]/mpls-label}</mpls-local-label>
+          <xconnect-encapsulation>mpls</xconnect-encapsulation>
+          <xconnect-local-ip>{../vpn-node[vpn-node-id=$REMOTE_SITE]/signaling-option/ldp-or-l2tp/pw-peer-list[position()=1]/peer-addr}</xconnect-local-ip>
+          <mpls-remote-label>{../vpn-node[vpn-node-id=$REMOTE_SITE]/signaling-option/ldp-or-l2tp/pw-peer-list[position()=1]/mpls-label}</mpls-remote-label>
+          <!-- if-description is not mapped! -->
+          <?expand p2p-policy?>
+          <?switch-context vpn-network-access?>
+          <?expand qos?>
+          <?expand ethernet-service-oam remoteNode=$REMOTE_SITE?>
+        </local-site>
+      </flat-L2vpn-p2p>
+    <?end?>
+
+    <?if {$VPN_SVC_TYPE='vpn-common:vpws-evpn'}?>
+      <service-type>evpn-vpws</service-type>
+      <flat-L2vpn-evpn-vpws>
+        <evi-id>{$EVI_ID}</evi-id>
+        <local-site>
+          <?expand primary-site-common-config?>
+          <xconnect-group-name>{$VPN_ID}</xconnect-group-name>
+          <p2p-name>{$VPN_ID}</p2p-name>
+          <?expand multi-home?>
+          <?expand evpn-vpws-policy?>
+          <?expand srv6?>
+          <evi-source>{$EVI_SOURCE}</evi-source>
+          <evi-target>{$EVI_TARGET}</evi-target>
+          <?switch-context vpn-network-access?>
+          <?expand qos?>
+          <?expand ethernet-service-oam remoteNode=$REMOTE_SITE?>
+        </local-site>
+      </flat-L2vpn-evpn-vpws>
+    <?end?>
+  </flat-L2vpn-internal-local-site-service>
+</config>

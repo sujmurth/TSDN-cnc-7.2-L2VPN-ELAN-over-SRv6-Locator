@@ -1,0 +1,47 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <devices xmlns="http://tail-f.com/ns/ncs">
+    <device>
+      <name>{pe}</name>
+      <?set EVI_ID ={string(../evi-id)}?>
+      <config>
+        <route-policy xmlns="http://tail-f.com/ned/cisco-ios-xr">
+          <name>{$ROUTE_POLICY_NAME}</name>
+          <value>{$ROUTE_POLICY_VALUE}</value>
+        </route-policy>
+        <!-- for backwards compatibility with evpn-vpws, configure evpn-evi only when route-policy-type is present -->
+        <?if {$SVC_TYPE='evpn-vpws'?>
+          <evpn xmlns="http://tail-f.com/ned/cisco-ios-xr" when="{sr-te/odn/route-policy-type!='' and $ROUTE_POLICY_NAME!=''}">
+            <evi>
+              <id>{$EVI_ID}</id>
+              <segment-routing when="{srv6}">srv6</segment-routing>
+              <bgp>
+                <route-policy>
+                  <export when="{sr-te/odn/route-policy-type = 'both' or sr-te/odn/route-policy-type = 'export'}">{$ROUTE_POLICY_NAME}</export>
+                  <import when="{sr-te/odn/route-policy-type = 'both' or sr-te/odn/route-policy-type = 'import'}">{$ROUTE_POLICY_NAME}</import>
+                </route-policy>
+              </bgp>
+              <locator when="{srv6/locator!=''}">{srv6/locator}</locator>
+            </evi>
+          </evpn>
+        <?else?>
+          <!-- $SVC_TYPE='evpn-multipoint' -->
+          <evpn xmlns="http://tail-f.com/ned/cisco-ios-xr">
+            <evi>
+              <id>{$EVI_ID}</id>
+              <segment-routing when="{srv6}">srv6</segment-routing>
+              <bgp>
+                <route-policy when="{sr-te/odn and $ROUTE_POLICY_NAME!=''">
+                  <export when="{sr-te/odn/route-policy-type = 'both' or sr-te/odn/route-policy-type = 'export'}">{$ROUTE_POLICY_NAME}</export>
+                  <import when="{sr-te/odn/route-policy-type = 'both' or sr-te/odn/route-policy-type = 'import'}">{$ROUTE_POLICY_NAME}</import>
+                </route-policy>
+              </bgp>
+              <!-- the local mac is advertised only in control-plane -->
+              <advertise-mac when="{srv6 and advertise-mac/enable = 'true'}"/>
+              <locator when="{srv6/locator!=''}">{srv6/locator}</locator>
+            </evi>
+          </evpn>
+        <?end?>
+      </config>
+    </device>
+  </devices>
+</config-template>

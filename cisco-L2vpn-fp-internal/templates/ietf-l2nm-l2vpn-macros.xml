@@ -1,0 +1,448 @@
+<config-template xmlns="http://tail-f.com/ns/config/1.0">
+  <!-- CUSTOM TEMPLATE -->
+  <?macro custom-template?>
+    <?foreach {custom-template}?>
+      <custom-template>
+        <name>{name}</name>
+        <?copy-tree {.}?>
+      </custom-template>
+    <?end?>
+  <?endmacro?>
+
+  <!-- INITIALIZE L2 LOCAL/REMOTE TEMPLATE VARIABLES -->
+  <?macro init-template-vars?>
+    <?switch-context vpn-network-access?>
+    <?set INTERFACE_ENCAP = '' ?>
+    <?set INTERFACE_ID = '' ?>
+    <?set INTERFACE_TYPE = '' ?>
+    <?set INTERFACE_DESC = {string(description)} ?>
+    <?set VLAN_ID = '' ?>
+    <?set SUB_IF_ID = '' ?>
+    <?set PHYSICAL_INF = ''?>
+
+    <?set PHYSICAL_INF = {string(interface-id)} ?>
+    <?set SUB_IF_ID = {connection/l2-termination-point} ?>
+    <?if {connection/encapsulation/encap-type='vpn-common:dot1q'}?>
+      <?set INTERFACE_ENCAP = 'dot1q' ?>
+      <?set VLAN_ID = {connection/encapsulation/dot1q/cvlan-id} ?>
+    <?end?>
+    <?if {connection/encapsulation/encap-type='vpn-common:untagged-int'}?>
+      <?set INTERFACE_ENCAP = 'untagged' ?>
+    <?end?>
+
+    <?if {starts-with($PHYSICAL_INF,'GigabitEthernet')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'GigabitEthernet')} ?>
+        <?set INTERFACE_TYPE = 'GigabitEthernet' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'Bundle-Ether')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'Bundle-Ether')} ?>
+        <?set INTERFACE_TYPE = 'Bundle-Ether' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'FiftyGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'FiftyGigE')} ?>
+        <?set INTERFACE_TYPE = 'FiftyGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'FortyGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'FortyGigE')} ?>
+        <?set INTERFACE_TYPE = 'FortyGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'FourHundredGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'FourHundredGigE')} ?>
+        <?set INTERFACE_TYPE = 'FourHundredGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'HundredGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'HundredGigE')} ?>
+        <?set INTERFACE_TYPE = 'HundredGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'TenGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'TenGigE')} ?>
+        <?set INTERFACE_TYPE = 'TenGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'TwentyFiveGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'TwentyFiveGigE')} ?>
+        <?set INTERFACE_TYPE = 'TwentyFiveGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'TwoHundredGigE')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'TwoHundredGigE')} ?>
+        <?set INTERFACE_TYPE = 'TwoHundredGigE' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'Ethernet')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'Ethernet')} ?>
+        <?set INTERFACE_TYPE = 'Ethernet' ?>
+    <?end?>
+    <?if {starts-with($PHYSICAL_INF,'CEM')}?>
+        <?set INTERFACE_ID = {substring-after($PHYSICAL_INF, 'CEM')} ?>
+        <?set INTERFACE_TYPE = 'CEM' ?>
+    <?end?>
+    <?switch-context vpn-node?>
+  <?endmacro?>
+
+  <!-- COMMON CONFIG FOR PRIMARY LOCAL/REMOTE SITES -->
+  <?macro primary-site-common-config?>
+    <pe>{vpn-node-id}</pe>
+
+    <?expand custom-template?>
+
+    <if-id>{$INTERFACE_ID}</if-id>
+    <if-type>{$INTERFACE_TYPE}</if-type>
+    <if-description>{$INTERFACE_DESC}</if-description>
+
+    <if-encap>{$INTERFACE_ENCAP}</if-encap>
+
+    <?switch-context vpn-network-access?>
+
+    <mtu>{service/mtu}</mtu>
+
+    <?if {$INTERFACE_ENCAP='dot1q'}?>
+      <vlan-id>{$VLAN_ID}</vlan-id>
+      <sub-if-id>{$SUB_IF_ID}</sub-if-id>
+      <?if {connection/encapsulation/dot1q/tag-operations/pop or connection/encapsulation/dot1q/tag-operations/push or connection/encapsulation/dot1q/tag-operations/translate}?>
+        <rewrite>
+          <ingress>
+            <pop when="{connection/encapsulation/dot1q/tag-operations/pop}">{connection/encapsulation/dot1q/tag-operations/pop}</pop>
+            <push when="{connection/encapsulation/dot1q/tag-operations/push}"></push>
+            <translate when="{connection/encapsulation/dot1q/tag-operations/translate}">{connection/encapsulation/dot1q/tag-operations/translate}</translate>
+            <dot1q>{connection/encapsulation/dot1q/tag-operations/tag-1}</dot1q>
+            <mode>{connection/encapsulation/dot1q/tag-operations/mode}</mode>
+          </ingress>
+        </rewrite>
+      <?end?>
+    <?end?>
+
+    <?if {$INTERFACE_ENCAP='untagged'}?>
+      <sub-if-id>{$SUB_IF_ID}</sub-if-id>
+      <?if {connection/encapsulation/untagged/tag-operations/push or connection/encapsulation/untagged/tag-operations/translate}?>
+        <rewrite>
+          <ingress>
+            <push when="{connection/encapsulation/untagged/tag-operations/push}"></push>
+            <translate when="{connection/encapsulation/untagged/tag-operations/translate}">{connection/encapsulation/untagged/tag-operations/translate}</translate>
+            <dot1q>{connection/encapsulation/untagged/tag-operations/tag-1}</dot1q>
+            <mode>{connection/encapsulation/untagged/tag-operations/mode}</mode>
+          </ingress>
+        </rewrite>
+      <?end?>
+    <?end?>
+    <?switch-context vpn-node?>
+  <?endmacro?>
+
+  <!-- ETHERNET SERVICE OAM -->
+  <?macro ethernet-service-oam remoteNode?>
+    <?set REMOTE_MEP_ID={../../../vpn-node[vpn-node-id=$remoteNode]/vpn-network-accesses/vpn-network-access[position()=1]/ethernet-service-oam/y-1731/mep-id}?>
+    <?if {ethernet-service-oam/md-name and count(ethernet-service-oam/y-1731)>0}?>
+      <?set-context-node {ethernet-service-oam}?>
+      <ethernet-service-oam>
+        <md-name>{md-name}</md-name>
+        <md-level>{md-level}</md-level>
+        <?foreach {y-1731}?>
+          <y-1731>
+            <maid>{maid}</maid>
+            <mep-id>{mep-id}</mep-id>
+            <message-period>{message-period}</message-period>
+            <remote-mep-id>{$REMOTE_MEP_ID}</remote-mep-id>
+            <?if {id-type='icc-based'}?>
+              <icc-based>{$SMAN_ID}</icc-based>
+            <?else?>
+              <number>{$SMAN_ID}</number>
+            <?end?>
+            <?foreach {y-1731-profile}?>
+              <y-1731-profile>
+                <name>{name}</name>
+                <?copy-tree {deref(name)/..}?>
+                <schedule>
+                  <interval>{schedule/interval}</interval>
+                  <duration>{schedule/duration}</duration>
+                </schedule>
+              </y-1731-profile>
+            <?end?>
+          </y-1731>
+        <?end?>
+      </ethernet-service-oam>
+    <?end?>
+  <?endmacro?>
+
+  <!-- P2P SR POLICY AND RSVP TE -->
+  <?macro p2p-policy?>
+    <?if {te-service-mapping/te-mapping/sr-policy}?>
+      <sr-te>
+        <preferred-path>
+          <policy>{te-service-mapping/te-mapping/sr-policy/policy}</policy>
+          <fallback>{te-service-mapping/te-mapping/sr-policy/fallback}</fallback>
+        </preferred-path>
+      </sr-te>
+    <?end?>
+    <?if {te-service-mapping/te-mapping/te-tunnel-list}?>
+      <rsvp-te>
+        <preferred-path>
+          <?if {te-service-mapping/te-mapping/te-tunnel-list/te-tunnel-id}?>
+            <te-tunnel-id>{te-service-mapping/te-mapping/te-tunnel-list/te-tunnel-id}</te-tunnel-id>
+          <?end?>
+          <?if {$TUNNEL_TE_ID != ""}?>
+            <te-tunnel-id>{$TUNNEL_TE_ID}</te-tunnel-id>
+          <?end?>
+          <fallback>{te-service-mapping/te-mapping/te-tunnel-list/fallback}</fallback>
+        </preferred-path>
+      </rsvp-te>
+    <?end?>
+  <?endmacro?>
+
+  <!-- EVPN VPWS SR POLICY AND ODN -->
+  <?macro evpn-vpws-policy?>
+    <?if {te-service-mapping/te-mapping/sr-policy}?>
+      <sr-te>
+        <preferred-path>
+          <?if {te-service-mapping/te-mapping/sr-policy/policy-type='cs-policy'}?>
+            <policy>{$CS_POLICY}</policy>
+          <?else?>
+            <policy>{te-service-mapping/te-mapping/sr-policy/policy}</policy>
+          <?end?>
+          <fallback>{te-service-mapping/te-mapping/sr-policy/fallback}</fallback>
+        </preferred-path>
+      </sr-te>
+      <pw-class>{$VPN_ID}</pw-class>
+    <?end?>
+    <sr-te when="{te-service-mapping/te-mapping/odn}">
+      <odn>
+        <?expand routing-policy-internal?>
+        <attach-point>
+          <parent-rr-route-policy>{te-service-mapping/te-mapping/odn/attach-point/parent-rr-route-policy}</parent-rr-route-policy>
+        </attach-point>
+        <?if {signaling-option/evpn-policies/vpn-policies/import-policy and signaling-option/evpn-policies/vpn-policies/export-policy}?>
+          <route-policy-type>both</route-policy-type>
+        <?else?>
+          <route-policy-type when="{signaling-option/evpn-policies/vpn-policies/import-policy}">import</route-policy-type>
+          <route-policy-type when="{signaling-option/evpn-policies/vpn-policies/export-policy}">export</route-policy-type>
+        <?end?>
+      </odn>
+    </sr-te>
+  <?endmacro?>
+
+  <?macro routing-policy-internal?>
+    <route-policy foreach="{te-service-mapping/te-mapping/odn/route-policy}">
+      <route-policy-name>{.}</route-policy-name>
+      <statements>
+        <statement foreach="{deref(deref(.))/../statements/statement}">
+          <name>{name}</name>
+          <conditions>
+            <match-rd-set when="{conditions/match-rd-set}">
+              <rd>{deref(conditions/match-rd-set/rd-set)/../rd}</rd>
+            </match-rd-set>
+            <match-evpn-route-type-set when="{conditions/match-evpn-route-type-set}">
+              <evpn-route-type>{deref(conditions/match-evpn-route-type-set/evpn-route-type-set)/../evpn-route-type}</evpn-route-type>
+            </match-evpn-route-type-set>
+            <match-etag-set when="{conditions/match-etag-set}">
+              <etag>{deref(conditions/match-etag-set/etag-set)/../etag}</etag>
+            </match-etag-set>
+            <match-manual when="{conditions/match-manual}">{conditions/match-manual}</match-manual>
+          </conditions>
+          <actions>
+            <bgp-actions>
+              <set-ext-community>
+                <tag-value>{deref(actions/bgp-actions/set-ext-community/ext-community-set-ref)/../tag-value}</tag-value>
+                <co-flag>{deref(actions/bgp-actions/set-ext-community/ext-community-set-ref)/../co-flag}</co-flag>
+              </set-ext-community>
+            </bgp-actions>
+          </actions>
+        </statement>
+      </statements>
+    </route-policy>
+  <?endmacro?>
+
+  <!-- SRV6 -->
+  <?macro srv6?>
+    <srv6 when="{te-service-mapping/srv6}">
+      <locator>{te-service-mapping/srv6/locator}</locator>
+    </srv6>
+  <?endmacro?>
+
+  <!-- MULTI HOME -->
+  <?macro multi-home?>
+    <?if {multi-home/ethernet-segment-identifier}?>
+      <multi-home>
+        <esi-value>{multi-home/ethernet-segment-identifier}</esi-value>
+      </multi-home>
+    <?end?>
+  <?endmacro?>
+
+  <!-- VPN TARGET for EVPN MPLS -->
+  <?macro ietf-copy-site-vpn-target rtValue rtType?>
+    <?if {$rtValue!=''}?>
+      <vpn-target>
+        <rt-value>{substring-after($rtValue, ':')}</rt-value>
+        <rt-type>$rtType</rt-type>
+      </vpn-target>
+    <?end?>
+  <?endmacro?>
+
+  <!-- QOS -->
+  <?macro qos?>
+    <qos foreach="{service/qos/qos-profile/qos-profile}">
+      <?if {contains(string(direction), 'both')}?>
+        <input-policy>{profile}</input-policy>
+        <output-policy>{profile}</output-policy>
+      <?end?>
+      <?if {contains(string(direction), 'wan-to-site')}?>
+        <input-policy>{profile}</input-policy>
+      <?end?>
+      <?if {contains(string(direction), 'site-to-wan')}?>
+        <output-policy>{profile}</output-policy>
+      <?end?>
+    </qos>
+  <?endmacro?>
+
+
+  <!-- L2 INTERNAL MACROS-->
+  <?macro intf-desc-shut?>
+    <?if {$IF_DESC=''}?>
+      <description>{$DEFAULT_INTF_DESC}</description>
+    <?else?>
+      <description>{$IF_DESC}</description>
+    <?end?>
+  <?endmacro?>
+  <?macro subintf-encap-rewrite-mtu?>
+    <mtu when="{mtu!=''}">{mtu}</mtu>
+    <encapsulation>
+      <dot1q when="{if-encap='dot1q'}">
+        <vlan-id>{vlan-id}</vlan-id>
+      </dot1q>
+      <untagged when="{if-encap='untagged'}"/>
+    </encapsulation>
+    <rewrite when="{rewrite/ingress}">
+      <ingress>
+        <tag>
+          <pop when="{rewrite/ingress/pop}">{rewrite/ingress/pop}</pop>
+          <push when="{rewrite/ingress/push}" />
+          <translate when="{rewrite/ingress/translate}">{rewrite/ingress/translate}</translate>
+          <mode when="{rewrite/ingress/mode}">{rewrite/ingress/mode}</mode>
+          <dot1q when="{not(rewrite/ingress/pop)}">{rewrite/ingress/dot1q}</dot1q>
+        </tag>
+      </ingress>
+    </rewrite>
+  <?endmacro?>
+  <?macro intf-ethernet-service-oam?>
+    <?if {ethernet-service-oam}?>
+      <ethernet>
+        <cfm>
+          <mep>
+            <?set MD_NAME={ethernet-service-oam/md-name}?>
+            <?foreach {ethernet-service-oam/y-1731}?>
+              <?set MEP_ID={mep-id}?>
+              <?set REMOTE_MEP_ID={remote-mep-id}?>
+              <domain>
+                <name>{$MD_NAME}</name>
+                <service>{$SERVICE_NAME}</service>
+                <mep-id when="{$MEP_ID!='' and $REMOTE_MEP_ID!=''}">{$MEP_ID}</mep-id>
+                <?foreach {y-1731-profile}?>
+                  <sla>
+                    <operation>
+                      <profile>
+                        <name>{name}</name>
+                        <mep-id>{$REMOTE_MEP_ID}</mep-id>
+                        <target/>
+                      </profile>
+                    </operation>
+                  </sla>
+                <?end?>
+              </domain>
+            <?end?>
+          </mep>
+        </cfm>
+      </ethernet>
+    <?end?>
+  <?endmacro?>
+  <?macro intf-desc-mtu-l2?>
+    <?expand intf-desc-shut?>
+    <description when="{if-description!=''}">{if-description}</description>
+    <mtu when="{mtu!=''}">{mtu}</mtu>
+    <l2transport />
+  <?endmacro?>
+  <?macro intf-desc-mtu-l2-eth?>
+    <?expand intf-desc-mtu-l2?>
+    <?expand intf-ethernet-service-oam?>
+  <?endmacro?>
+  <?macro subintf-desc-mode-mtu-encap-rewrite?>
+    <?expand intf-desc-shut?>
+    <description when="{if-description!=''}">{if-description}</description>
+    <mode>l2transport</mode>
+    <?expand subintf-encap-rewrite-mtu?>
+  <?endmacro?>
+  <?macro subintf-desc-mode-mtu-encap-rewrite-eth?>
+    <?expand subintf-desc-mode-mtu-encap-rewrite?>
+    <?expand intf-ethernet-service-oam?>
+  <?endmacro?>
+  <?macro params-stats-measure-buckets?>
+    <buckets>
+      <size>
+        <number>{$BUCKET_SIZE}</number>
+        <probes/>
+      </size>
+      <archive>{$BUCKET_ARCHIVE}</archive>
+    </buckets>
+  <?endmacro?>
+  <?macro delay-params-stats-measure type id?>
+    <?if {delay-params/statistic[type='$type']}?>
+      <measure>
+        <id>$id</id>
+        <?expand params-stats-measure-buckets?>
+      </measure>
+    <?end?>
+  <?endmacro?>
+  <?macro loss-params-stats-measure type id?>
+    <?if {loss-params/statistic[type='$type']}?>
+      <measure>
+        <id>$id</id>
+        <aggregate>
+          <bins>5</bins>
+          <width>5</width>
+        </aggregate>
+        <?expand params-stats-measure-buckets?>
+      </measure>
+    <?end?>
+  <?endmacro?>
+  <?macro copy-site-ethernet-service-oam?>
+    <y-1731>
+      <maid>{maid}</maid>
+      <remote-mep-id>{$REMOTE_MEP_ID}</remote-mep-id>
+      <?if {id-type='icc-based'}?>
+        <icc-based>{$SMAN_ID}</icc-based>
+      <?else?>
+        <number>{$SMAN_ID}</number>
+      <?end?>
+      <?foreach {y-1731-profile}?>
+        <y-1731-profile>
+          <name>{name}</name>
+          <?copy-tree {deref(name)/..}?>
+          <!-- override global y-1731-profile with service level schedule -->
+          <schedule>
+            <interval>{schedule/interval}</interval>
+            <duration>{schedule/duration}</duration>
+          </schedule>
+        </y-1731-profile>
+      <?end?>
+    </y-1731>
+  <?endmacro?>
+  <?macro copy-site-vpn-target rtValue rtType?>
+    <vpn-target>
+      <rt-value>$rtValue</rt-value>
+      <rt-type>$rtType</rt-type>
+    </vpn-target>
+  <?endmacro?>
+  <?macro qos-service-policy?>
+    <service-policy when="{qos}">
+      <input when="{qos/input-policy}">
+        <name>{qos/input-policy}</name>
+      </input>
+      <output when="{qos/output-policy}">
+        <name>{qos/output-policy}</name>
+      </output>
+    </service-policy>
+  <?endmacro?>
+   <?macro qos-service-policy-p2p?>
+    <l2transport when="{qos}">
+      <?expand qos-service-policy?>
+    </l2transport>
+  <?endmacro?>
+   <?macro qos-service-policy-p2p-subinterface?>
+    <mode when="{qos}">l2transport</mode>
+    <?expand qos-service-policy?>
+  <?endmacro?>
+</config-template>

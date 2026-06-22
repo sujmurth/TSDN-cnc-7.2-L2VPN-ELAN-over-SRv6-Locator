@@ -1,0 +1,76 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <?save-context vpn-network-access?>
+  <?set-context-node {../..}?>
+  <?save-context vpn-node?>
+  <?set-context-node {../..}?>
+  <?save-context service?>
+
+  <flat-L2vpn-internal-site-service xmlns="http://cisco.com/ns/nso/fp/examples/cisco-tsdn-flat-L2vpn-internal-site">
+    <name>L2NM-{vpn-id}-internal</name>
+    <site-name>{$SITE}</site-name>
+
+    <?expand custom-template?>
+    <?expand init-template-vars?>
+
+    <service-type>evpn-multipoint</service-type>
+    <flat-L2vpn-evpn-multipoint>
+      <evi-id>{$EVI_ID}</evi-id>
+      <?switch-context service?>
+      <topology when="{vpn-service-topology}">{$TOPOLOGY}</topology>
+      <bridge-group>{bridge-group}</bridge-group>
+      <?switch-context vpn-node?>
+      <site>
+        <site-name>{$SITE}</site-name>
+        <?expand primary-site-common-config?>
+        <?expand multi-home?>
+        <?if {$TOPOLOGY = 'E-LAN'}?>
+          <?expand ietf-copy-site-vpn-target rtValue=$HUB_RT_VALUE rtType='both'?>
+        <?end?>
+        <?if {$TOPOLOGY = 'E-TREE'}?>
+          <?if {role='vpn-common:spoke-role'}?>
+            <?expand ietf-copy-site-vpn-target rtValue=$HUB_RT_VALUE rtType='import'?>
+            <?expand ietf-copy-site-vpn-target rtValue=$SPOKE_RT_VALUE rtType='export'?>
+          <?else?>
+            <?expand ietf-copy-site-vpn-target rtValue=$HUB_RT_VALUE rtType='both'?>
+            <?expand ietf-copy-site-vpn-target rtValue=$SPOKE_RT_VALUE rtType='import'?>
+          <?end?>
+        <?end?>
+        <?if {role='vpn-common:spoke-role'}?>
+          <?if {multi-home/spoke-multi-homed}?>
+            <leaf>multi-homing</leaf>
+          <?else?>
+            <leaf>single-homing</leaf>
+          <?end?>
+        <?end?>
+        <advertise-mac>
+          <enable>{boolean(signaling-option/evpn-policies/mac-learning-mode = 'l2vpn-ntw:control-plane')}</enable>
+        </advertise-mac>
+        <control-word-disable>{control-word-disable}</control-word-disable>
+        <vpn-target foreach="{signaling-option/evpn-policies/vpn-target/route-targets}">
+          <rt-value>{substring-after(route-target, ":")}</rt-value>
+          <rt-type>{../route-target-type}</rt-type>
+        </vpn-target>
+        <sr-te when="{te-service-mapping/te-mapping/odn}">
+          <odn>
+            <?expand routing-policy-internal?>
+            <attach-point>
+              <parent-rr-route-policy>{te-service-mapping/te-mapping/odn/attach-point/parent-rr-route-policy}</parent-rr-route-policy>
+            </attach-point>
+            <?if {signaling-option/evpn-policies/vpn-policies/import-policy and signaling-option/evpn-policies/vpn-policies/export-policy}?>
+              <route-policy-type>both</route-policy-type>
+            <?else?>
+              <route-policy-type when="{signaling-option/evpn-policies/vpn-policies/import-policy}">import</route-policy-type>
+              <route-policy-type when="{signaling-option/evpn-policies/vpn-policies/export-policy}">export</route-policy-type>
+            <?end?>
+          </odn>
+        </sr-te>
+        <?expand srv6?>
+        <?switch-context vpn-network-access?>
+        <?expand qos?>
+        <split-horizon when="{role='vpn-common:spoke-role'}">
+          <enable>{connection/lag-interface/split-horizon/enable}</enable>
+        </split-horizon>
+      </site>
+    </flat-L2vpn-evpn-multipoint>
+  </flat-L2vpn-internal-site-service>
+</config>

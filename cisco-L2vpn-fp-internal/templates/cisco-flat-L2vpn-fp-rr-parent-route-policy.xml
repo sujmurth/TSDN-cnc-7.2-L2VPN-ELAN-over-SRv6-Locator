@@ -1,0 +1,7 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <l2vpn-rr-parent-route-policy xmlns="http://cisco.com/ns/nso/cfp/cisco-flat-L2vpn-fp-internal-common">
+    <name>{attach-point/parent-rr-route-policy}</name>
+    <device>{$PE}</device>
+    <local-route-policy>{../route-policy}</local-route-policy>
+  </l2vpn-rr-parent-route-policy>
+</config>
