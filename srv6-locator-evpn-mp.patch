@@ -1,0 +1,18 @@
+--- cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml.bak	2026-06-22 15:14:54
++++ cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml	2026-06-22 15:14:54
+@@ -423,6 +423,7 @@
+         <evpn xmlns="http://tail-f.com/ned/cisco-ios-xr">
+           <evi>
+             <id>{$EVI_ID}</id>
++            <segment-routing when="{srv6}">srv6</segment-routing>
+             <bgp>
+               <route-target foreach="{vpn-target}">
+                 <import when="{rt-type = 'both' or rt-type = 'import'}">
+@@ -443,6 +444,7 @@
+             </advertise-mac>
+             <control-word-disable when="{control-word-disable = 'true'}">
+             </control-word-disable>
++            <locator when="{srv6/locator!=''}">{srv6/locator}</locator>
+           </evi>
+           <interface when="{multi-home}">
+             <name >{if-type}{if-id}</name>
