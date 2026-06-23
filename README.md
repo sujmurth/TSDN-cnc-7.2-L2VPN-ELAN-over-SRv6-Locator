@@ -269,6 +269,7 @@ Example L2NM EVPN-MP E-LAN service:
   }
 }
 ```
+</details>
 
 ## CNC TSDN NSO Dry Run Config pushed to network 
 
@@ -380,8 +381,6 @@ cli-c {
 }
 
 ```
-
-</details>
 
 ## CNC Verification (nodes node-10, node-16, node-5)
 
