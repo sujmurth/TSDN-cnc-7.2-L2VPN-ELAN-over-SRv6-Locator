@@ -271,10 +271,15 @@ Example L2NM EVPN-MP E-LAN service:
 ```
 </details>
 
-## CNC TSDN NSO Dry Run Config pushed to network 
+## CNC TSDN NSO Dry Run Config Pushed to Network
 
-```
-admin@ncs(config)# l2vpn-ntw vpn-services vpn-service L2NM-EVPN-MP-ELAN-SRv6 get-modifications outformat cli-c 
+The NSO dry-run output below shows the device configuration generated for the EVPN-MP E-LAN service before it is pushed to the network. The important SRv6 evidence is present on all three PE nodes: `evi 10165 segment-routing srv6` and `locator MAIN`.
+
+<details>
+<summary>Show NSO dry-run CLI config</summary>
+
+```text
+admin@ncs(config)# l2vpn-ntw vpn-services vpn-service L2NM-EVPN-MP-ELAN-SRv6 get-modifications outformat cli-c
 cli-c {
     local-node {
         data devices device node-10
@@ -373,14 +378,15 @@ cli-c {
                    exit
                   exit
                  exit
-                exit
+               exit
                !
               !
-              
+
     }
 }
-
 ```
+
+</details>
 
 ## CNC Verification (nodes node-10, node-16, node-5)
 
