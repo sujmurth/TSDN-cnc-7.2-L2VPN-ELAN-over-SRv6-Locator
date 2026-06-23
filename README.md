@@ -122,11 +122,11 @@ The fix was applied to the running eNSO package copy and the package reloaded:
 5. Reloaded packages:
    ```
    echo "packages reload" | ncs_cli -u admin -C
-   ```
+ 
    Result: `result true`; package `cisco-L2vpn-fp-internal` `oper-status up`.
 
 ---
-
+  ```
 ## Service Payload (example)
 
 L2NM EVPN-MP (E-LAN) over SRv6, `any-to-any`, locator `MAIN`, EVI `10165`:
