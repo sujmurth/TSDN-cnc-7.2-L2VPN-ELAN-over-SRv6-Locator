@@ -67,53 +67,53 @@ The fix was applied to the running eNSO package copy and the package reloaded:
 -rw------- 1 root root    170582 Mar 19 21:10 ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz
 2. Untar this package root@enso-5bdb6f7478-97mz7:/nso/run/packages# tar -zxvf ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz
    ```
-cisco-L2vpn-fp-internal/
-cisco-L2vpn-fp-internal/CHANGES
-cisco-L2vpn-fp-internal/README.md
-cisco-L2vpn-fp-internal/package-meta-data.xml
-cisco-L2vpn-fp-internal/python/
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/IosXR.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/__init__.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_actions.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_local_site_nano_services.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_remote_site_nano_services.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_rr_parent_route_policy.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_services.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_site_nano_services.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/main.py
-cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/utils.py
-cisco-L2vpn-fp-internal/src/
-cisco-L2vpn-fp-internal/src/yang/
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-common.yang
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-local-site.yang
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-remote-site.yang
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-site.yang
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-local-site-nano-services.yang
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-remote-site-nano-services.yang
-cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-site-nano-services.yang
-cisco-L2vpn-fp-internal/templates/
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-vpws-template.xml
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-p2p-template.xml
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-routing-policy-template.xml
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-no-shutdown-iosxr-cli.xml
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-parent-route-policy-iosxr-cli.xml
-cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-rr-parent-route-policy.xml
-cisco-L2vpn-fp-internal/templates/ietf-l2nm-copy-cfp-configurations.xml
-cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-evpn-mp-template.xml
-cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-local-site-template.xml
-cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-macros.xml
-cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-remote-site-template.xml
-cisco-L2vpn-fp-internal/load-dir/
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-site.fxs
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-local-site-nano-services.fxs
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-common.fxs
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-remote-site.fxs
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-local-site.fxs
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-site-nano-services.fxs
-cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-remote-site-nano-services.fxs
-cisco-L2vpn-fp-internal/build-meta-data.xml
+      cisco-L2vpn-fp-internal/
+      cisco-L2vpn-fp-internal/CHANGES
+      cisco-L2vpn-fp-internal/README.md
+      cisco-L2vpn-fp-internal/package-meta-data.xml
+      cisco-L2vpn-fp-internal/python/
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/IosXR.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/__init__.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_actions.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_local_site_nano_services.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_remote_site_nano_services.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_rr_parent_route_policy.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_services.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_site_nano_services.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/main.py
+      cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/utils.py
+      cisco-L2vpn-fp-internal/src/
+      cisco-L2vpn-fp-internal/src/yang/
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-common.yang
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-local-site.yang
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-remote-site.yang
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-site.yang
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-local-site-nano-services.yang
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-remote-site-nano-services.yang
+      cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-site-nano-services.yang
+      cisco-L2vpn-fp-internal/templates/
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-vpws-template.xml
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-p2p-template.xml
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-routing-policy-template.xml
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-no-shutdown-iosxr-cli.xml
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-parent-route-policy-iosxr-cli.xml
+      cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-rr-parent-route-policy.xml
+      cisco-L2vpn-fp-internal/templates/ietf-l2nm-copy-cfp-configurations.xml
+      cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-evpn-mp-template.xml
+      cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-local-site-template.xml
+      cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-macros.xml
+      cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-remote-site-template.xml
+      cisco-L2vpn-fp-internal/load-dir/
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-site.fxs
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-local-site-nano-services.fxs
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-common.fxs
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-remote-site.fxs
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-local-site.fxs
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-site-nano-services.fxs
+      cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-remote-site-nano-services.fxs
+      cisco-L2vpn-fp-internal/build-meta-data.xml
 ```
 
 3. Backup ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz in a tmp folder and delete the tar.gz package .As we will be modifying the untar package and reload NSO.
