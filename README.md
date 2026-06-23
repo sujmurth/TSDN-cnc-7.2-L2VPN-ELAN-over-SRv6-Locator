@@ -270,6 +270,117 @@ Example L2NM EVPN-MP E-LAN service:
 }
 ```
 
+## CNC TSDN NSO Dry Run Config pushed to network 
+
+```
+admin@ncs(config)# l2vpn-ntw vpn-services vpn-service L2NM-EVPN-MP-ELAN-SRv6 get-modifications outformat cli-c 
+cli-c {
+    local-node {
+        data devices device node-10
+               config
+                interface TenGigE 0/0/0/20
+                 description T-SDN Interface
+                 no shutdown
+                exit
+                interface TenGigE 0/0/0/20.3111 l2transport
+                 description T-SDN Interface
+                 encapsulation dot1q 3111
+                 no shutdown
+                 rewrite ingress tag pop 1 symmetric
+                exit
+                evpn
+                 evi 10165 segment-routing srv6
+                  bgp
+                  exit
+                  advertise-mac
+                   !
+                  locator MAIN
+                 exit
+                exit
+                l2vpn
+                 bridge group BRIDGE
+                  bridge-domain BRIDGE_evi_10165
+                   interface TenGigE0/0/0/20.3111
+                   exit
+                   evi 10165 segment-routing srv6
+                   exit
+                  exit
+                 exit
+                exit
+               !
+              !
+              devices device node-16
+               config
+                interface TenGigE 0/0/0/30
+                 description T-SDN Interface
+                 no shutdown
+                exit
+                interface TenGigE 0/0/0/30.3111 l2transport
+                 description T-SDN Interface
+                 encapsulation dot1q 3111
+                 no shutdown
+                 rewrite ingress tag pop 1 symmetric
+                exit
+                evpn
+                 evi 10165 segment-routing srv6
+                  bgp
+                  exit
+                  advertise-mac
+                   !
+                  locator MAIN
+                 exit
+                exit
+                l2vpn
+                 bridge group BRIDGE
+                  bridge-domain BRIDGE_evi_10165
+                   interface TenGigE0/0/0/30.3111
+                   exit
+                   evi 10165 segment-routing srv6
+                   exit
+                  exit
+                 exit
+                exit
+               !
+              !
+              devices device node-5
+               config
+                interface HundredGigE 0/0/0/30
+                 description T-SDN Interface
+                 no shutdown
+                exit
+                interface HundredGigE 0/0/0/30.3110 l2transport
+                 description T-SDN Interface
+                 encapsulation dot1q 3110
+                 no shutdown
+                 rewrite ingress tag pop 1 symmetric
+                exit
+                evpn
+                 evi 10165 segment-routing srv6
+                  bgp
+                  exit
+                  advertise-mac
+                   !
+                  locator MAIN
+                 exit
+                exit
+                l2vpn
+                 bridge group BRIDGE
+                  bridge-domain BRIDGE_evi_10165
+                   interface HundredGigE0/0/0/30.3110
+                   exit
+                   evi 10165 segment-routing srv6
+                   exit
+                  exit
+                 exit
+                exit
+               !
+              !
+              
+    }
+}
+
+```
+
 </details>
 
 ## CNC Verification (nodes node-10, node-16, node-5)
