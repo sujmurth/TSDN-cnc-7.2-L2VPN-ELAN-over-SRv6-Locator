@@ -40,6 +40,7 @@ Under `evpn / evi`:
 
 Update xml as below. Refer to the package in this repository.
 
+```
         <evpn xmlns="http://tail-f.com/ned/cisco-ios-xr">
           <evi>
             <id>{$EVI_ID}</id>
@@ -55,6 +56,8 @@ Update xml as below. Refer to the package in this repository.
             <locator when="{srv6/locator!=''}">{srv6/locator}</locator>
           </evi>
 
+```
+
 ## Below modifications done on SVM eNSO . Can be done similarly on CNC Cluster setup 
 
 The fix was applied to the running eNSO package copy and the package reloaded:
@@ -62,7 +65,8 @@ The fix was applied to the running eNSO package copy and the package reloaded:
 1. Login to CW using SSH and go to eNSO pod. Go to folder  /nso/run/packages/
    root@enso-5bdb6f7478-97mz7:/nso/run/packages# ls -ltr | grep L2
 -rw------- 1 root root    170582 Mar 19 21:10 ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz
-2. Untar this package root@enso-5bdb6f7478-97mz7:/nso/run/packages# tar -zxvf ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz 
+2. Untar this package root@enso-5bdb6f7478-97mz7:/nso/run/packages# tar -zxvf ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz
+   ```
 cisco-L2vpn-fp-internal/
 cisco-L2vpn-fp-internal/CHANGES
 cisco-L2vpn-fp-internal/README.md
@@ -110,10 +114,12 @@ cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-local-site.fxs
 cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-site-nano-services.fxs
 cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-remote-site-nano-services.fxs
 cisco-L2vpn-fp-internal/build-meta-data.xml
+```
+
 3. Backup ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz in a tmp folder and delete the tar.gz package .As we will be modifying the untar package and reload NSO.
-3. Apply the changes to this file
+4. Apply the changes to this file
    `/nso/run/packages/cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml`.
-4. Reloaded packages:
+5. Reloaded packages:
    ```
    echo "packages reload" | ncs_cli -u admin -C
    ```
@@ -255,6 +261,7 @@ L2NM EVPN-MP (E-LAN) over SRv6, `any-to-any`, locator `MAIN`, EVI `10165`:
 
 ### `show evpn evi vpn-id 10165 detail`
 
+```
 ## Node-10:
 
 VPN-ID     Encap      Bridge Domain                Type               
@@ -291,6 +298,8 @@ VPN-ID     Encap      Bridge Domain                Type
 
    RP/0/RP0/CPU0:node-10#
 
+```
+```
 ## Node-16: 
 
 VPN-ID     Encap      Bridge Domain                Type               
@@ -326,8 +335,9 @@ VPN-ID     Encap      Bridge Domain                Type
    65000:10165                    Export               
 
 RP/0/RP0/CPU0:node-16#
-
-## node-5 
+```
+```
+## Node-5 
 
 VPN-ID     Encap      Bridge Domain                Type               
 ---------- ---------- ---------------------------- -------------------
@@ -361,12 +371,14 @@ VPN-ID     Encap      Bridge Domain                Type
    65000:10165                    Export 
 
    RP/0/RP0/CPU0:node-5#
+```
 
 ### `show segment-routing srv6 sid` (Locator: MAIN)
 
 All three PEs allocate both EVPN SIDs from the `MAIN` locator block, owner `l2vpn_srv6`,
 context `10165:0`, state `InUse` (uDT2U + uDT2M).
 
+```
 ## Node-10
 
 *** Locator: 'MAIN' *** 
@@ -380,7 +392,8 @@ fcbb:0:10:e004::            uB6 (PSP/USD Insert.Red)  'srte_c_2112_ep_2010::5' (
 fcbb:0:10:e005::            uB6 (PSP/USD Insert.Red)  'srte_c_2112_ep_2010::16' (2112, 2010::16)  xtc_srv6            InUse  Y 
 fcbb:0:10:e006::            uDT2U             10165:0                           l2vpn_srv6          InUse  Y 
 fcbb:0:10:e007::            uDT2M             10165:0                           l2vpn_srv6          InUse  Y 
-
+```
+```
 ## Node-16
 
 *** Locator: 'MAIN' *** 
@@ -395,7 +408,8 @@ fcbb:0:16:e005::            uB6 (Insert.Red)  'srte_c_2112_ep_2010::5' (2112, 20
 fcbb:0:16:e006::            uB6 (Insert.Red)  'srte_c_2112_ep_2010::10' (2112, 2010::10)  xtc_srv6            InUse  Y 
 fcbb:0:16:e007::            uDT2U             10165:0                           l2vpn_srv6          InUse  Y 
 fcbb:0:16:e008::            uDT2M             10165:0                           l2vpn_srv6          InUse  Y 
-
+```
+```
 ## Node-5 
 
 *** Locator: 'MAIN' *** 
@@ -414,11 +428,66 @@ fcbb:0:5:e009::             uA (PSP/USD)      [Hu0/0/0/8, Link-Local]:0         
 fcbb:0:5:e00a::             uB6 (Insert.Red)  'srte_c_2112_ep_2010::16' (2112, 2010::16)  xtc_srv6            InUse  Y 
 fcbb:0:5:e00b::             uDT2U             10165:0                           l2vpn_srv6          InUse  Y 
 fcbb:0:5:e00c::             uDT2M             10165:0                           l2vpn_srv6          InUse  Y 
+```
 
 ### `show l2vpn bridge-domain bd-name BRIDGE_evi_10165`
 
 All three PEs: bridge-domain `state: up`, EVPN `state: up`.
 
+```
+## Node-10
 
+Tue Jun 23 00:55:34.832 UTC
+Legend: pp = Partially Programmed.
+Bridge group: BRIDGE, bridge-domain: BRIDGE_evi_10165, id: 1, state: up, ShgId: 0, MSTi: 0
+  Aging: 300 s, MAC limit: 64000, Action: none, Notification: syslog
+  Filter MAC addresses: 0
+  ACs: 1 (1 up), VFIs: 0, PWs: 0 (0 up), PBBs: 0 (0 up), VNIs: 0 (0 up)
+  List of EVPNs:
+    EVPN, state: up
+  List of ACs:
+    Te0/0/0/20.3111, state: up, Static MAC addresses: 0, MSTi: 2
+  List of Access PWs:
+  List of VFIs:
+  List of Access VFIs:
+RP/0/RP0/CPU0:node-10#
+
+```
+```
+## Node-16
+
+Tue Jun 23 00:55:36.471 UTC
+Legend: pp = Partially Programmed.
+Bridge group: BRIDGE, bridge-domain: BRIDGE_evi_10165, id: 1, state: up, ShgId: 0, MSTi: 0
+  Aging: 300 s, MAC limit: 4000, Action: none, Notification: syslog
+  Filter MAC addresses: 0
+  ACs: 1 (1 up), VFIs: 0, PWs: 0 (0 up), PBBs: 0 (0 up), VNIs: 0 (0 up)
+  List of EVPNs:
+    EVPN, state: up
+  List of ACs:
+    Te0/0/0/30.3111, state: up, Static MAC addresses: 0, MSTi: 2
+  List of Access PWs:
+  List of VFIs:
+  List of Access VFIs:
+
+  ```
+  ```
+  ## Node-5 
+
+  Tue Jun 23 00:55:38.028 UTC
+Legend: pp = Partially Programmed.
+Bridge group: BRIDGE, bridge-domain: BRIDGE_evi_10165, id: 1, state: up, ShgId: 0, MSTi: 0
+  Aging: 300 s, MAC limit: 64000, Action: none, Notification: syslog
+  Filter MAC addresses: 0
+  ACs: 1 (1 up), VFIs: 0, PWs: 0 (0 up), PBBs: 0 (0 up), VNIs: 0 (0 up)
+  List of EVPNs:
+    EVPN, state: up
+  List of ACs:
+    Hu0/0/0/30.3110, state: up, Static MAC addresses: 0, MSTi: 2
+  List of Access PWs:
+  List of VFIs:
+  List of Access VFIs:
+RP/0/RP0/CPU0:node-5#
+```
 
 The fix above applies to the **IOS-XR CLI NED** path, which is the one in use for these nodes.
