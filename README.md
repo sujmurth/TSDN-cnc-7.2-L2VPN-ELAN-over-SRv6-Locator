@@ -39,7 +39,7 @@ evpn
 
 ## What Changed
 
-Update this template:
+Update this template: 
 
 ```text
 packages/cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml
@@ -55,6 +55,7 @@ Under `evpn / evi`, add:
 Important: in the IOS-XR CLI NED structure, `locator` is a sibling leaf under `<evi>`. It is not nested inside `<segment-routing>`.
 
 ## Template Patch
+Refer the updated package: cisco-L2vpn-fp-internal in this git repo.
 
 Add the `segment-routing` and `locator` leaves in the EVPN-MP device template:
 
