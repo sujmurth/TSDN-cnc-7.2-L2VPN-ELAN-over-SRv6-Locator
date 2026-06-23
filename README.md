@@ -1,11 +1,9 @@
-# TSDN FP Fix — SRv6 Locator under EVPN-MP (E-LAN) EVI
+# TSDN FP Update — SRv6 Locator under EVPN-MP (E-LAN) EVI
 
 ## Summary
 
 For EVPN Multipoint (E-LAN) services, the TSDN Function Pack (FP) `cisco-L2vpn-fp-internal`
-package generated the SRv6 binding **only** under the L2VPN bridge-domain EVI
-(`l2vpn ... bridge-domain ... evi <id> segment-routing srv6`), but **omitted** the
-SRv6 binding and the **per-EVI locator** under the top-level `evpn evi <id>` block.
+package doesnt support the SRv6 binding and the **per-EVI locator** under the top-level `evpn evi <id>` block.
 
 As a result, the intended IOS-XR configuration:
 
@@ -25,29 +23,13 @@ This document records the device-template change that closes that gap.
 - **Product:** Cisco Crosswork Network Controller (CNC) — TSDN Function Pack 7.2
 - **NSO:** 6.4.8 (`tsdn-7.2.0-source-code-nso-6.4.8.a83516ab`)
 - **Service type:** L2NM EVPN Multipoint (E-LAN), `any-to-any`, SRv6 transport
-- **Reference:** xrdocs — *SRv6 Transport on NCS5500, Part 6* (EVPN ELAN over SRv6)
-
----
-
-## Root Cause
-
-The data model and the L2NM → internal mapping were already complete:
-
-- `cisco-flat-L2vpn-fp-internal-common.yang` — `grouping srv6-grp` → `container srv6 { presence; leaf locator ... }`
-- `ietf-l2nm-l2vpn-macros.xml` — `srv6` macro maps `te-service-mapping/srv6/locator` → `srv6/locator`
-- `ietf-l2nm-l2vpn-evpn-mp-template.xml` — expands `srv6` into the internal service
-
-The gap was purely in the **device output template** for the IOS-XR CLI NED:
-`cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml`. The top-level `<evpn><evi>`
-block did not emit the `segment-routing srv6` leaf nor the `locator` leaf, even though
-the analogous structure was already proven in
-`cisco-flat-L2vpn-fp-cli-routing-policy-template.xml` (applied only for ODN services).
+- **Reference:** xrdocs — *SRv6 Transport on NCS5500, Part 6* (EVPN ELAN over SRv6) :https://xrdocs.io/ncs5500/tutorials/srv6-transport-on-ncs-part-6
 
 ---
 
 ## File Changed
 
-`packages/cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml`
+In `packages/cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml`
 
 ### Node structure (IOS-XR CLI NED)
 
@@ -56,26 +38,8 @@ Under `evpn / evi`:
 - `<locator when="{srv6/locator!=''}">{srv6/locator}</locator>` is a **sibling leaf** under
   `<evi>` (NOT nested inside `segment-routing`), and renders `locator <LOCATOR>`.
 
-### Before (stock)
+Update xml as below. Refer to the package in this repository.
 
-```xml
-        <evpn xmlns="http://tail-f.com/ned/cisco-ios-xr">
-          <evi>
-            <id>{$EVI_ID}</id>
-            <bgp>
-              ...
-            </bgp>
-            <etree when="...">...</etree>
-            <advertise-mac when="{advertise-mac/enable = 'true'}">
-            </advertise-mac>
-            <control-word-disable when="{control-word-disable = 'true'}">
-            </control-word-disable>
-          </evi>
-```
-
-### After (fixed)
-
-```xml
         <evpn xmlns="http://tail-f.com/ned/cisco-ios-xr">
           <evi>
             <id>{$EVI_ID}</id>
@@ -90,34 +54,66 @@ Under `evpn / evi`:
             </control-word-disable>
             <locator when="{srv6/locator!=''}">{srv6/locator}</locator>
           </evi>
-```
 
-### Step-by-step edit
-
-1. In the top-level `<evpn>` → `<evi>` block, **after** the line
-   `<id>{$EVI_ID}</id>`, insert:
-   ```xml
-   <segment-routing when="{srv6}">srv6</segment-routing>
-   ```
-2. In the same `<evi>` block, **after** the closing `</control-word-disable>` and
-   **before** `</evi>`, insert:
-   ```xml
-   <locator when="{srv6/locator!=''}">{srv6/locator}</locator>
-   ```
-
-> Note: the bridge-domain EVI binding (`<segment-routing when="{srv6}">srv6</segment-routing>`
-> under `l2vpn ... bridge-domain ... evi`) was already present in stock and is unchanged.
-
----
-
-## Deployment (applied on live CNC controller 172.20.163.27)
+## Below modifications done on SVM eNSO . Can be done similarly on CNC Cluster setup 
 
 The fix was applied to the running eNSO package copy and the package reloaded:
 
-1. Backed up the live template (`...template.xml.bak`).
-2. Applied the two inserts above to
+1. Login to CW using SSH and go to eNSO pod. Go to folder  /nso/run/packages/
+   root@enso-5bdb6f7478-97mz7:/nso/run/packages# ls -ltr | grep L2
+-rw------- 1 root root    170582 Mar 19 21:10 ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz
+2. Untar this package root@enso-5bdb6f7478-97mz7:/nso/run/packages# tar -zxvf ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz 
+cisco-L2vpn-fp-internal/
+cisco-L2vpn-fp-internal/CHANGES
+cisco-L2vpn-fp-internal/README.md
+cisco-L2vpn-fp-internal/package-meta-data.xml
+cisco-L2vpn-fp-internal/python/
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/IosXR.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/__init__.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_actions.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_local_site_nano_services.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_remote_site_nano_services.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_rr_parent_route_policy.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_services.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/flat_L2vpn_site_nano_services.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/main.py
+cisco-L2vpn-fp-internal/python/cisco_flat_L2vpn_fp_internal/utils.py
+cisco-L2vpn-fp-internal/src/
+cisco-L2vpn-fp-internal/src/yang/
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-common.yang
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-local-site.yang
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-remote-site.yang
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-internal-site.yang
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-local-site-nano-services.yang
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-remote-site-nano-services.yang
+cisco-L2vpn-fp-internal/src/yang/cisco-flat-L2vpn-fp-site-nano-services.yang
+cisco-L2vpn-fp-internal/templates/
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-vpws-template.xml
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-p2p-template.xml
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-routing-policy-template.xml
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-no-shutdown-iosxr-cli.xml
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-parent-route-policy-iosxr-cli.xml
+cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-rr-parent-route-policy.xml
+cisco-L2vpn-fp-internal/templates/ietf-l2nm-copy-cfp-configurations.xml
+cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-evpn-mp-template.xml
+cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-local-site-template.xml
+cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-macros.xml
+cisco-L2vpn-fp-internal/templates/ietf-l2nm-l2vpn-remote-site-template.xml
+cisco-L2vpn-fp-internal/load-dir/
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-site.fxs
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-local-site-nano-services.fxs
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-common.fxs
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-remote-site.fxs
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-internal-local-site.fxs
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-site-nano-services.fxs
+cisco-L2vpn-fp-internal/load-dir/cisco-flat-L2vpn-fp-remote-site-nano-services.fxs
+cisco-L2vpn-fp-internal/build-meta-data.xml
+3. Backup ncs-6.4.11-cisco-L2vpn-fp-internal-7.2.1.tar.gz in a tmp folder and delete the tar.gz package .As we will be modifying the untar package and reload NSO.
+3. Apply the changes to this file
    `/nso/run/packages/cisco-L2vpn-fp-internal/templates/cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml`.
-3. Reloaded packages:
+4. Reloaded packages:
    ```
    echo "packages reload" | ncs_cli -u admin -C
    ```
@@ -140,12 +136,105 @@ L2NM EVPN-MP (E-LAN) over SRv6, `any-to-any`, locator `MAIN`, EVI `10165`:
           "vpn-service-topology": "ietf-vpn-common:any-to-any",
           "vpn-nodes": {
             "vpn-node": [
-              { "vpn-node-id": "node-10",
-                "cisco-l2vpn-ntw:te-service-mapping": { "srv6": { "locator": "MAIN" } } },
-              { "vpn-node-id": "node-16",
-                "cisco-l2vpn-ntw:te-service-mapping": { "srv6": { "locator": "MAIN" } } },
-              { "vpn-node-id": "node-5",
-                "cisco-l2vpn-ntw:te-service-mapping": { "srv6": { "locator": "MAIN" } } }
+              {
+                "vpn-node-id": "node-10",
+                "signaling-option": {
+                  "evpn-policies": {
+                    "mac-learning-mode": "ietf-l2vpn-ntw:control-plane"
+                  }
+                },
+                "vpn-network-accesses": {
+                  "vpn-network-access": [
+                    {
+                      "id": "a3",
+                      "interface-id": "TenGigE0/0/0/20",
+                      "connection": {
+                        "encapsulation": {
+                          "encap-type": "ietf-vpn-common:dot1q",
+                          "dot1q": {
+                            "cvlan-id": 3111,
+                            "tag-operations": {
+                              "pop": "1",
+                              "cisco-l2vpn-ntw:mode": "symmetric"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "cisco-l2vpn-ntw:te-service-mapping": {
+                  "srv6": {
+                    "locator": "MAIN"
+                  }
+                }
+              },
+              {
+                "vpn-node-id": "node-16",
+                "signaling-option": {
+                  "evpn-policies": {
+                    "mac-learning-mode": "ietf-l2vpn-ntw:control-plane"
+                  }
+                },
+                "vpn-network-accesses": {
+                  "vpn-network-access": [
+                    {
+                      "id": "a2",
+                      "interface-id": "TenGigE0/0/0/30",
+                      "connection": {
+                        "encapsulation": {
+                          "encap-type": "ietf-vpn-common:dot1q",
+                          "dot1q": {
+                            "cvlan-id": 3111,
+                            "tag-operations": {
+                              "pop": "1",
+                              "cisco-l2vpn-ntw:mode": "symmetric"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "cisco-l2vpn-ntw:te-service-mapping": {
+                  "srv6": {
+                    "locator": "MAIN"
+                  }
+                }
+              },
+              {
+                "vpn-node-id": "node-5",
+                "signaling-option": {
+                  "evpn-policies": {
+                    "mac-learning-mode": "ietf-l2vpn-ntw:control-plane"
+                  }
+                },
+                "vpn-network-accesses": {
+                  "vpn-network-access": [
+                    {
+                      "id": "a4",
+                      "interface-id": "HundredGigE0/0/0/30",
+                      "connection": {
+                        "encapsulation": {
+                          "encap-type": "ietf-vpn-common:dot1q",
+                          "dot1q": {
+                            "cvlan-id": 3110,
+                            "tag-operations": {
+                              "pop": "1",
+                              "cisco-l2vpn-ntw:mode": "symmetric"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                },
+                "cisco-l2vpn-ntw:te-service-mapping": {
+                  "srv6": {
+                    "locator": "MAIN"
+                  }
+                }
+              }
             ]
           },
           "cisco-l2vpn-ntw:evi-id": 10165,
@@ -159,41 +248,177 @@ L2NM EVPN-MP (E-LAN) over SRv6, `any-to-any`, locator `MAIN`, EVI `10165`:
 
 ---
 
-## Verification (nodes node-10, node-16, node-5)
+## CNC  Verification (nodes node-10, node-16, node-5)
+
+
+
 
 ### `show evpn evi vpn-id 10165 detail`
 
-| Field | node-10 | node-16 | node-5 |
-|---|---|---|---|
-| Encap | SRv6 | SRv6 | SRv6 |
-| Type | EVPN | EVPN | EVPN |
-| Bridge Domain | BRIDGE_evi_10165 | BRIDGE_evi_10165 | BRIDGE_evi_10165 |
-| Unicast SID (uDT2U) | fcbb:0:10:e006:: | fcbb:0:16:e007:: | fcbb:0:5:e00b:: |
-| Multicast SID (uDT2M) | fcbb:0:10:e007:: | fcbb:0:16:e008:: | fcbb:0:5:e00c:: |
-| Advertise MACs | Yes | Yes | Yes |
-| **SRv6 Locator Name** | **MAIN** | **MAIN** | **MAIN** |
-| RT Auto | 65000:10165 | 65000:10165 | 65000:10165 |
+## Node-10:
+
+VPN-ID     Encap      Bridge Domain                Type               
+---------- ---------- ---------------------------- -------------------
+10165      SRv6       BRIDGE_evi_10165             EVPN               
+   Stitching: Regular
+   Unicast SID:  fcbb:0:10:e006::                       
+   Multicast SID:  fcbb:0:10:e007::                       
+   E-Tree: Root
+   Forward-class: 0
+   Advertise MACs: Yes
+   Advertise BVI MACs: No
+   Aliasing: Enabled
+   UUF: Enabled
+   Re-origination: Enabled
+   Multicast:
+     IGMP-Snooping Proxy: No
+     MLD-Snooping Proxy : No
+   BGP Implicit Import: Enabled
+   VRF Name: 
+   SRv6 Locator Name: MAIN
+   SRv6 SID Function Length: 16 bits
+   Preferred Nexthop Mode: Off
+   BVI Coupled Mode: No
+   BVI Subnet Withheld: ipv4 No, ipv6 No
+   L3VRF Label Mode: Per-VRF
+   RD Config: none
+   RD Auto  : (auto) 198.19.1.10:10165
+   RT Auto  : 65000:10165
+   Route Targets in Use           Type                 
+   ------------------------------ ---------------------
+   65000:10165                    Import               
+   65000:10165                    Export            
+
+   RP/0/RP0/CPU0:node-10#
+
+## Node-16: 
+
+VPN-ID     Encap      Bridge Domain                Type               
+---------- ---------- ---------------------------- -------------------
+10165      SRv6       BRIDGE_evi_10165             EVPN               
+   Stitching: Regular
+   Unicast SID:  fcbb:0:16:e007::                       
+   Multicast SID:  fcbb:0:16:e008::                       
+   E-Tree: Root
+   Forward-class: 0
+   Advertise MACs: Yes
+   Advertise BVI MACs: No
+   Aliasing: Enabled
+   UUF: Enabled
+   Re-origination: Enabled
+   Multicast:
+     IGMP-Snooping Proxy: No
+     MLD-Snooping Proxy : No
+   BGP Implicit Import: Enabled
+   VRF Name: 
+   SRv6 Locator Name: MAIN
+   SRv6 SID Function Length: 16 bits
+   Preferred Nexthop Mode: Off
+   BVI Coupled Mode: No
+   BVI Subnet Withheld: ipv4 No, ipv6 No
+   L3VRF Label Mode: Per-VRF
+   RD Config: none
+   RD Auto  : (auto) 198.19.1.16:10165
+   RT Auto  : 65000:10165
+   Route Targets in Use           Type                 
+   ------------------------------ ---------------------
+   65000:10165                    Import               
+   65000:10165                    Export               
+
+RP/0/RP0/CPU0:node-16#
+
+## node-5 
+
+VPN-ID     Encap      Bridge Domain                Type               
+---------- ---------- ---------------------------- -------------------
+10165      SRv6       BRIDGE_evi_10165             EVPN               
+   Stitching: Regular
+   Unicast SID:  fcbb:0:5:e00b::                        
+   Multicast SID:  fcbb:0:5:e00c::                        
+   E-Tree: Root
+   Forward-class: 0
+   Advertise MACs: Yes
+   Advertise BVI MACs: No
+   Aliasing: Enabled
+   UUF: Enabled
+   Re-origination: Enabled
+   Multicast:
+     IGMP-Snooping Proxy: No
+     MLD-Snooping Proxy : No
+   BGP Implicit Import: Enabled
+   VRF Name: 
+   SRv6 Locator Name: MAIN
+   SRv6 SID Function Length: 16 bits
+   Preferred Nexthop Mode: Off
+   BVI Coupled Mode: No
+   BVI Subnet Withheld: ipv4 No, ipv6 No
+   RD Config: none
+   RD Auto  : (auto) 198.19.1.5:10165
+   RT Auto  : 65000:10165
+   Route Targets in Use           Type                 
+   ------------------------------ ---------------------
+   65000:10165                    Import               
+   65000:10165                    Export 
+
+   RP/0/RP0/CPU0:node-5#
 
 ### `show segment-routing srv6 sid` (Locator: MAIN)
 
 All three PEs allocate both EVPN SIDs from the `MAIN` locator block, owner `l2vpn_srv6`,
 context `10165:0`, state `InUse` (uDT2U + uDT2M).
 
+## Node-10
+
+*** Locator: 'MAIN' *** 
+
+fcbb:0:10::                 uN (PSP/USD)      'default':16                      sidmgr              InUse  Y 
+fcbb:0:10:e000::            uDT2U             12346:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:10:e001::            uDT2M             12346:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:10:e002::            uA (PSP/USD)      [BE101, Link-Local]:0             isis-1              InUse  Y 
+fcbb:0:10:e003::            uA (PSP/USD)      [BE105, Link-Local]:0             isis-1              InUse  Y 
+fcbb:0:10:e004::            uB6 (PSP/USD Insert.Red)  'srte_c_2112_ep_2010::5' (2112, 2010::5)  xtc_srv6            InUse  Y 
+fcbb:0:10:e005::            uB6 (PSP/USD Insert.Red)  'srte_c_2112_ep_2010::16' (2112, 2010::16)  xtc_srv6            InUse  Y 
+fcbb:0:10:e006::            uDT2U             10165:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:10:e007::            uDT2M             10165:0                           l2vpn_srv6          InUse  Y 
+
+## Node-16
+
+*** Locator: 'MAIN' *** 
+
+fcbb:0:16::                 uN (PSP/USD)      'default':22                      sidmgr              InUse  Y 
+fcbb:0:16:e000::            uDT2U             12346:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:16:e001::            uDT2M             12346:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:16:e002::            uA (PSP/USD)      [Hu0/0/0/37, Link-Local]:0        isis-1              InUse  Y 
+fcbb:0:16:e003::            uA (PSP/USD)      [Te0/0/0/4, Link-Local]:0         isis-1              InUse  Y 
+fcbb:0:16:e004::            uA (PSP/USD)      [Te0/0/0/5, Link-Local]:0         isis-1              InUse  Y 
+fcbb:0:16:e005::            uB6 (Insert.Red)  'srte_c_2112_ep_2010::5' (2112, 2010::5)  xtc_srv6            InUse  Y 
+fcbb:0:16:e006::            uB6 (Insert.Red)  'srte_c_2112_ep_2010::10' (2112, 2010::10)  xtc_srv6            InUse  Y 
+fcbb:0:16:e007::            uDT2U             10165:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:16:e008::            uDT2M             10165:0                           l2vpn_srv6          InUse  Y 
+
+## Node-5 
+
+*** Locator: 'MAIN' *** 
+
+fcbb:0:5::                  uN (PSP/USD)      'default':5                       sidmgr              InUse  Y 
+fcbb:0:5:e000::             uDT2U             12346:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:5:e001::             uDT2M             12346:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:5:e002::             uA (PSP/USD)      [Hu0/0/0/18, Link-Local]:0        isis-1              InUse  Y 
+fcbb:0:5:e003::             uA (PSP/USD)      [Hu0/0/0/16, Link-Local]:0        isis-1              InUse  Y 
+fcbb:0:5:e004::             uA (PSP/USD)      [Hu0/0/0/14, Link-Local]:0        isis-1              InUse  Y 
+fcbb:0:5:e005::             uA (PSP/USD)      [BE45, Link-Local]:0              isis-1              InUse  Y 
+fcbb:0:5:e006::             uA (PSP/USD)      [BE57, Link-Local]:0              isis-1              InUse  Y 
+fcbb:0:5:e007::             uA (PSP/USD)      [BE105, Link-Local]:0             isis-1              InUse  Y 
+fcbb:0:5:e008::             uB6 (Insert.Red)  'srte_c_2112_ep_2010::10' (2112, 2010::10)  xtc_srv6            InUse  Y 
+fcbb:0:5:e009::             uA (PSP/USD)      [Hu0/0/0/8, Link-Local]:0         isis-1              InUse  Y 
+fcbb:0:5:e00a::             uB6 (Insert.Red)  'srte_c_2112_ep_2010::16' (2112, 2010::16)  xtc_srv6            InUse  Y 
+fcbb:0:5:e00b::             uDT2U             10165:0                           l2vpn_srv6          InUse  Y 
+fcbb:0:5:e00c::             uDT2M             10165:0                           l2vpn_srv6          InUse  Y 
+
 ### `show l2vpn bridge-domain bd-name BRIDGE_evi_10165`
 
 All three PEs: bridge-domain `state: up`, EVPN `state: up`.
 
-> The attachment circuits (ACs) show `down` because the physical AC ports are down at
-> Layer 1 (no CE/optic/peer in the lab). This is independent of the SRv6 locator fix —
-> the EVPN/SRv6 control plane and data-plane SID allocation are fully programmed.
 
----
-
-## Related templates (change only if those NEDs are used)
-
-- UM NED: `packages/l2vpn-multi-vendors/templates/cisco-flat-L2vpn-fp-um-evpn-multipoint-template.xml`
-  (has bridge-domain `segment-routing-srv6-evis` but no `locator` under `evis/evi`).
-- Native NC NED: `packages/l2vpn-multi-vendors/templates/cisco-flat-L2vpn-fp-native-evpn-multipoint-template.xml`
-  (no srv6/locator at all).
 
 The fix above applies to the **IOS-XR CLI NED** path, which is the one in use for these nodes.
