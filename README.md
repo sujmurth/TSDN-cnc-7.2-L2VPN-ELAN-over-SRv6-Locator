@@ -658,19 +658,14 @@ It specifically closes the EVPN-MP E-LAN SRv6 locator rendering gap by ensuring 
 
 ## Crosswork Assurance HP for L2VPN SRv6 Transport
 
-This repository also includes a custom Crosswork Assurance heuristic package for validating L2VPN EVPN-MP E-LAN over SRv6 locator transport:
+This repository also includes Crosswork Assurance heuristic package artifacts for validating L2VPN EVPN-MP E-LAN over SRv6 locator transport.
 
-```text
-heuristic-package/l2vpn_srv6_transport_hp_v2.0.tar.gz
-```
+| Artifact | Use | SHA256 |
+| --- | --- | --- |
+| `heuristic-package/l2vpn_srv6_transport_hp_v2.0.tar.gz` | Minimal L2VPN SRv6 locator HP update package. Use when the target custom namespace already has the baseline custom objects. | `380a71df7b667aeaca3ffccd4e74bb96d55047149bcbfcd734d6af0b26f89338` |
+| `heuristic-package/custom_namespace_full_hp_v2.0.tar.gz` | Full post-validation custom namespace export with dependent custom metrics, subservices, profiles, rules, and plugins. Use this for clean reimport on another CNC to avoid missing dependencies. | `b2309b991425b1f00fe0b969fe2f1a1fc0ceae486e568fed5d78e71cafcd3ce1` |
 
-SHA256:
-
-```text
-380a71df7b667aeaca3ffccd4e74bb96d55047149bcbfcd734d6af0b26f89338
-```
-
-The package is for the custom namespace and updates only the L2VPN-MP rule path:
+The minimal L2VPN package is for the custom namespace and updates only the L2VPN-MP rule path:
 
 | Object | Version | Purpose |
 | --- | --- | --- |
@@ -720,7 +715,9 @@ Value mapping:
 | `false` | `down` |
 | empty/no feed | left empty so collection gaps are not reported as false locator-down symptoms |
 
-The v2.0 package intentionally does not add custom EVPN SID or custom BGP nexthop checks. Baseline L2VPN system checks already validate EVPN/BGP/MAC/bridge health, while this custom HP focuses specifically on SRv6 locator transport health. No L3VPN rule, profile, metric, plugin, or subservice file is changed by this package.
+The v2.0 L2VPN package intentionally does not add custom EVPN SID or custom BGP nexthop checks. Baseline L2VPN system checks already validate EVPN/BGP/MAC/bridge health, while this custom HP focuses specifically on SRv6 locator transport health.
+
+The full custom namespace export contains pre-existing custom L3VPN objects because it is intended for dependency-complete reimport. The v2.0 L2VPN SRv6 change itself modifies only the L2VPN-MP SRv6 locator objects listed above.
 
 ### Healthy Assurance Graph
 
