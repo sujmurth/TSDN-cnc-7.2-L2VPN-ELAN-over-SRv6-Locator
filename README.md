@@ -655,3 +655,119 @@ cisco-flat-L2vpn-fp-cli-evpn-multipoint-template.xml
 ```
 
 It specifically closes the EVPN-MP E-LAN SRv6 locator rendering gap by ensuring the per-EVI `locator <LOCATOR>` is emitted when `srv6/locator` is present in the service payload.
+
+## Crosswork Assurance HP for L2VPN SRv6 Transport
+
+This repository also includes a custom Crosswork Assurance heuristic package for validating L2VPN EVPN-MP E-LAN over SRv6 locator transport:
+
+```text
+heuristic-package/l2vpn_srv6_transport_hp_v2.0.tar.gz
+```
+
+SHA256:
+
+```text
+380a71df7b667aeaca3ffccd4e74bb96d55047149bcbfcd734d6af0b26f89338
+```
+
+The package is for the custom namespace and updates only the L2VPN-MP rule path:
+
+| Object | Version | Purpose |
+| --- | --- | --- |
+| `Rule-L2VPN-MP custom` | `2.0` | Adds the SRv6 locator transport subtree to the L2VPN-MP assurance graph |
+| `subservice.l2vpn.srv6.transport.summary custom` | `1.2` | Rolls up the per-PE SRv6 locator checks |
+| `subservice.l2vpn.srv6.locator.health custom` | `1.0` | Evaluates locator health per PE |
+| `metric.l2vpn.srv6.locator.rib.route custom` | `1.8` | Collects SRv6 locator operational state from IOS XR |
+
+The HP preserves the baseline system L2VPN assurance checks:
+
+- device health
+- BGP neighbor health
+- EVPN and MAC learning
+- bridge-domain state
+- attachment-circuit state
+
+The custom SRv6 branch is instantiated only for an L2VPN service that carries:
+
+```text
+cisco-l2vpn-ntw:te-service-mapping/srv6/locator
+```
+
+For each SRv6-enabled PE, the rule extracts:
+
+- PE device name
+- SRv6 locator name, for example `MAIN`
+
+It then creates one locator-health subservice per PE.
+
+For the validation service `L2NM-EVPN-MP-ELAN-SRv6-1094`, the graph created three locator leaves:
+
+- `l2vpn.srv6.locator.health node-4`
+- `l2vpn.srv6.locator.health node-9`
+- `l2vpn.srv6.locator.health node-10`
+
+The metric reads this IOS XR gNMI path:
+
+```text
+/Cisco-IOS-XR-segment-routing-srv6-oper:srv6/active/locators/locator[name={srv6Locator}]/info/is-operational
+```
+
+Value mapping:
+
+| Device value | Assurance value |
+| --- | --- |
+| `true` | `up` |
+| `false` | `down` |
+| empty/no feed | left empty so collection gaps are not reported as false locator-down symptoms |
+
+The v2.0 package intentionally does not add custom EVPN SID or custom BGP nexthop checks. Baseline L2VPN system checks already validate EVPN/BGP/MAC/bridge health, while this custom HP focuses specifically on SRv6 locator transport health. No L3VPN rule, profile, metric, plugin, or subservice file is changed by this package.
+
+### Healthy Assurance Graph
+
+After importing the v2.0 HP and restarting monitoring, the service reached:
+
+| Field | Value |
+| --- | --- |
+| Service | `L2NM-EVPN-MP-ELAN-SRv6-1094` |
+| Rule | `Rule-L2VPN-MP custom` |
+| Profile | `Gold_L2VPN_ConfigProfile custom` |
+| Top-level health | `SERVICE_UP` |
+| Monitoring status | `MONITORING_SUCCESS` |
+| Subservices | `19/19 SERVICE_UP` |
+| Active symptoms | `0` |
+| Custom EVPN SID leaves | `0` |
+
+All three custom SRv6 locator checks resolved healthy:
+
+| PE | Locator | Metric value |
+| --- | --- | --- |
+| `node-4` | `MAIN` | `up` |
+| `node-9` | `MAIN` | `up` |
+| `node-10` | `MAIN` | `up` |
+
+![Healthy L2VPN SRv6 assurance graph](assets/cnc-assurance-graph-l2vpn-srv6-healthy.png)
+
+### Device-Side Verification
+
+The locator state can be checked directly from each IOS XR PE with gNMI:
+
+```console
+gnmic -a <device-gnmi-address>:57400 -u <user> -p <password> --insecure --timeout 5m --encoding PROTO subscribe \
+  --path '/Cisco-IOS-XR-segment-routing-srv6-oper:srv6/active/locators/locator[name=MAIN]/info/is-operational' \
+  --mode once
+```
+
+Expected healthy result:
+
+```json
+{
+  "updates": [
+    {
+      "Path": "is-operational",
+      "values": {
+        "is-operational": true
+      }
+    }
+  ]
+}
+```
