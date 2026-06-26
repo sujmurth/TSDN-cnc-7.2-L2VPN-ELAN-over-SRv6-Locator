@@ -715,9 +715,7 @@ Value mapping:
 | `false` | `down` |
 | empty/no feed | left empty so collection gaps are not reported as false locator-down symptoms |
 
-The v2.0 L2VPN package intentionally does not add custom EVPN SID or custom BGP nexthop checks. Baseline L2VPN system checks already validate EVPN/BGP/MAC/bridge health, while this custom HP focuses specifically on SRv6 locator transport health.
-
-The full custom namespace export contains pre-existing custom L3VPN objects because it is intended for dependency-complete reimport. The v2.0 L2VPN SRv6 change itself modifies only the L2VPN-MP SRv6 locator objects listed above.
+ Baseline L2VPN system checks already validate EVPN/BGP/MAC/bridge health, while this custom HP focuses specifically on SRv6 locator transport health.
 
 ### Healthy Assurance Graph
 
